@@ -1,0 +1,21 @@
+// SPDX-FileCopyrightText: 2026 vsier <https://github.com/vsier>
+// SPDX-License-Identifier: MIT
+
+#ifndef RAT_RAT_CONFIG_H_
+#define RAT_RAT_CONFIG_H_
+
+#include <limits.h>
+
+
+#define RAT_CONFIG_OS_@CMAKE_SYSTEM_NAME@ // https://cmake.org/cmake/help/latest/variable/CMAKE_SYSTEM_NAME.html
+#define RAT_CONFIG_OSVER "@CMAKE_SYSTEM_VERSION@" // https://cmake.org/cmake/help/latest/variable/CMAKE_SYSTEM_VERSION.html
+#define RAT_CONFIG_CPU_@ratConfigSystemProcessor@ // https://cmake.org/cmake/help/latest/variable/CMAKE_SYSTEM_PROCESSOR.html
+#define RAT_CONFIG_ARCH_@CMAKE_C_COMPILER_ARCHITECTURE_ID@ // https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER_ARCHITECTURE_ID.html
+#define RAT_CONFIG_COMPILER_@CMAKE_C_COMPILER_ID@ // https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER_ID.html
+#define RAT_CONFIG_COMPILERVER "@CMAKE_C_COMPILER_VERSION@" // https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_COMPILER_VERSION.html
+#define RAT_CONFIG_BYTEORDER_@CMAKE_C_BYTE_ORDER@ // https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_BYTE_ORDER.html
+
+#define RAT_CONFIG_CACHELINE_SIZE @ratConfigCachelineSize@
+#define RAT_CONFIG_BITNESS (@CMAKE_SIZEOF_VOID_P@ * CHAR_BIT)
+
+#endif
