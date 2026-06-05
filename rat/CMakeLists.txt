@@ -25,7 +25,7 @@ set(ratGeneratedHeadersDir "${CMAKE_CURRENT_BINARY_DIR}/include/rat")
 
 set(ratConfigCachelineSize 64 CACHE STRING "rat cacheline size")
 string(REGEX REPLACE "[^A-Za-z0-9_]" "_" ratConfigSystemProcessor "${CMAKE_SYSTEM_PROCESSOR}")
-configure_file("rat_config.h.in" "${ratGeneratedHeadersDir}/rat_config.h" @ONLY)
+configure_file("include/rat/rat_config.h.in" "${ratGeneratedHeadersDir}/rat_config.h" @ONLY)
 
 generate_export_header(rat
 	EXPORT_FILE_NAME "${ratGeneratedHeadersDir}/rat_export.h")
