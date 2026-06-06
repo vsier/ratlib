@@ -7,6 +7,8 @@
 #include <rat/common.h>
 
 
+// Predefined CRC algorithm parameters follow the RevEng CRC Catalogue:
+// https://reveng.sourceforge.io/crc-catalogue/all.htm
 typedef enum
 {
     // Parity bit
