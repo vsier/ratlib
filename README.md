@@ -8,10 +8,10 @@ SPDX-License-Identifier: MIT
 ratlib is a small C99 utility library for allocators, collections, and low-level
 helpers.
 
-[![linux-gcc](https://github.com/vsier/ratlib/actions/workflows/ci-linux-gcc.yml/badge.svg)](https://github.com/vsier/ratlib/actions/workflows/ci-linux-gcc.yml)
-[![linux-clang](https://github.com/vsier/ratlib/actions/workflows/ci-linux-clang.yml/badge.svg)](https://github.com/vsier/ratlib/actions/workflows/ci-linux-clang.yml)
-[![macos-clang](https://github.com/vsier/ratlib/actions/workflows/ci-macos-clang.yml/badge.svg)](https://github.com/vsier/ratlib/actions/workflows/ci-macos-clang.yml)
-[![windows](https://github.com/vsier/ratlib/actions/workflows/ci-windows.yml/badge.svg)](https://github.com/vsier/ratlib/actions/workflows/ci-windows.yml)
+[![](https://github.com/vsier/ratlib/actions/workflows/ci-macos-latest-clang.yml/badge.svg)](https://github.com/vsier/ratlib/actions/workflows/ci-macos-latest-clang.yml)\
+[![](https://github.com/vsier/ratlib/actions/workflows/ci-ubuntu-latest-clang.yml/badge.svg)](https://github.com/vsier/ratlib/actions/workflows/ci-ubuntu-latest-clang.yml)\
+[![](https://github.com/vsier/ratlib/actions/workflows/ci-ubuntu-latest-gcc.yml/badge.svg)](https://github.com/vsier/ratlib/actions/workflows/ci-ubuntu-latest-gcc.yml)\
+[![](https://github.com/vsier/ratlib/actions/workflows/ci-windows-latest.yml/badge.svg)](https://github.com/vsier/ratlib/actions/workflows/ci-windows-latest.yml)
 
 ## Functionality
 

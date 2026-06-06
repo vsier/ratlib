@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 vsier <https://github.com/vsier>
 # SPDX-License-Identifier: MIT
 
-name: CI Linux Clang
+name: ubuntu-latest-gcc
 
 on:
   push:
@@ -38,7 +38,7 @@ jobs:
           fi
 
           cmake -S . -B build \
-            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_C_COMPILER=gcc \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -DRAT_BUILD_TESTS=$build_tests \
             -DRAT_BUILD_BENCHMARKS=$build_benchmarks \

@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 vsier <https://github.com/vsier>
 # SPDX-License-Identifier: MIT
 
-name: CI macOS
+name: windows-latest
 
 on:
   push:
@@ -16,12 +16,16 @@ permissions:
 jobs:
   build:
     name: ${{ matrix.build_type }}
-    runs-on: macos-latest
+    runs-on: windows-latest
 
     strategy:
       fail-fast: false
       matrix:
         build_type: [ Debug, Release ]
+
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Checkout
@@ -38,23 +42,21 @@ jobs:
           fi
 
           cmake -S . -B build \
-            -DCMAKE_C_COMPILER=clang \
-            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -DRAT_BUILD_TESTS=$build_tests \
             -DRAT_BUILD_BENCHMARKS=$build_benchmarks \
             -DRAT_INSTALL=ON
 
       - name: Build
-        run: cmake --build build --parallel
+        run: cmake --build build --config ${{ matrix.build_type }} --parallel
 
       - name: Test
         if: matrix.build_type == 'Debug'
-        run: ctest --test-dir build --output-on-failure
+        run: ctest --test-dir build --build-config Debug --output-on-failure
 
       - name: Benchmark Smoke
         if: matrix.build_type == 'Release'
-        run: ./build/benchmarks/rat_benchmarks 128 1
+        run: ./build/benchmarks/Release/rat_benchmarks.exe 128 1
 
       - name: Install
         if: matrix.build_type == 'Release'
-        run: cmake --install build --prefix "$RUNNER_TEMP/ratlib-install"
+        run: cmake --install build --config Release --prefix "$RUNNER_TEMP/ratlib-install"
