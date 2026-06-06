@@ -3,6 +3,7 @@
 
 {
     "cmake.configureSettings": {
-        "RAT_BUILD_TESTS": "ON"
+        "RAT_BUILD_TESTS": "ON",
+        "RAT_BUILD_BENCHMARKS": "ON",
     }
 }

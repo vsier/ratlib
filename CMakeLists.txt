@@ -9,12 +9,17 @@ include(GNUInstallDirs)
 
 option(RAT_INSTALL "Generate ratlib install rules." ${PROJECT_IS_TOP_LEVEL})
 option(RAT_BUILD_TESTS "Build ratlib tests." OFF)
+option(RAT_BUILD_BENCHMARKS "Build ratlib benchmarks." OFF)
 
 add_subdirectory("rat")
 
 if (RAT_BUILD_TESTS)
 	enable_testing()
 	add_subdirectory("tests")
+endif()
+
+if (RAT_BUILD_BENCHMARKS)
+	add_subdirectory("benchmarks")
 endif()
 
 if (RAT_INSTALL)

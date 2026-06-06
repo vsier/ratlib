@@ -66,6 +66,14 @@ cmake --build build --config Debug
 ctest --test-dir build -C Debug --output-on-failure
 ```
 
+Build the benchmark executable:
+
+```sh
+cmake -S . -B build -DRAT_BUILD_BENCHMARKS=ON
+cmake --build build --config Release --target rat_benchmarks
+build/benchmarks/Release/rat_benchmarks 4096 100
+```
+
 Install the library:
 
 ```sh

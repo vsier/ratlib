@@ -10,11 +10,8 @@ if (NOT DEFINED RAT_INSTALL)
 	option(RAT_INSTALL "Generate ratlib install rules." ${PROJECT_IS_TOP_LEVEL})
 endif()
 
-set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_STANDARD_REQUIRED ON)
-
-
 add_library(rat STATIC)
+target_compile_features(rat PUBLIC c_std_99)
 
 if (CMAKE_C_COMPILER_ID STREQUAL "MSVC")
 	target_compile_options(rat PRIVATE "/W4" "/wd4200")
