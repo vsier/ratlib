@@ -1,0 +1,119 @@
+# SPDX-FileCopyrightText: 2026 vsier <https://github.com/vsier>
+# SPDX-License-Identifier: MIT
+
+name: CI
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.name }} ${{ matrix.build_type }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Ubuntu GCC
+            os: ubuntu-latest
+            c_compiler: gcc
+            build_type: Debug
+            build_tests: ON
+            build_benchmarks: OFF
+          - name: Ubuntu GCC
+            os: ubuntu-latest
+            c_compiler: gcc
+            build_type: Release
+            build_tests: OFF
+            build_benchmarks: ON
+          - name: Ubuntu Clang
+            os: ubuntu-latest
+            c_compiler: clang
+            build_type: Debug
+            build_tests: ON
+            build_benchmarks: OFF
+          - name: Ubuntu Clang
+            os: ubuntu-latest
+            c_compiler: clang
+            build_type: Release
+            build_tests: OFF
+            build_benchmarks: ON
+          - name: macOS Clang
+            os: macos-latest
+            c_compiler: clang
+            build_type: Debug
+            build_tests: ON
+            build_benchmarks: OFF
+          - name: macOS Clang
+            os: macos-latest
+            c_compiler: clang
+            build_type: Release
+            build_tests: OFF
+            build_benchmarks: ON
+          - name: Windows MSVC
+            os: windows-latest
+            c_compiler: ""
+            build_type: Debug
+            build_tests: ON
+            build_benchmarks: OFF
+          - name: Windows MSVC
+            os: windows-latest
+            c_compiler: ""
+            build_type: Release
+            build_tests: OFF
+            build_benchmarks: ON
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Configure
+        run: |
+          compiler_arg=""
+          if [ -n "${{ matrix.c_compiler }}" ]; then
+            compiler_arg="-DCMAKE_C_COMPILER=${{ matrix.c_compiler }}"
+          fi
+
+          build_type_arg=""
+          if [ "${{ runner.os }}" != "Windows" ]; then
+            build_type_arg="-DCMAKE_BUILD_TYPE=${{ matrix.build_type }}"
+          fi
+
+          cmake -S . -B build \
+            -DRAT_BUILD_TESTS=${{ matrix.build_tests }} \
+            -DRAT_BUILD_BENCHMARKS=${{ matrix.build_benchmarks }} \
+            -DRAT_INSTALL=ON \
+            $build_type_arg \
+            $compiler_arg
+
+      - name: Build
+        run: cmake --build build --config ${{ matrix.build_type }} --parallel
+
+      - name: Test
+        if: matrix.build_type == 'Debug'
+        run: ctest --test-dir build --build-config Debug --output-on-failure
+
+      - name: Benchmark Smoke
+        if: matrix.build_type == 'Release'
+        run: |
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            ./build/benchmarks/Release/rat_benchmarks.exe 128 1
+          else
+            ./build/benchmarks/rat_benchmarks 128 1
+          fi
+
+      - name: Install
+        if: matrix.build_type == 'Release'
+        run: cmake --install build --config Release --prefix "$RUNNER_TEMP/ratlib-install"
