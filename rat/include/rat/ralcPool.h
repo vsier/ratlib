@@ -32,6 +32,8 @@ void ralcPool_free(ralcPool *p, void *ptr);
 // Frees all chunks through the parent allocator and invalidates all slots.
 void ralcPool_clear(ralcPool *p);
 
+// Fills out_usage with parent allocator accounting adjusted so pool chunks are
+// system storage, live slots are blocks, and free slots are holes.
 void ralcPool_getUsage(ralcPool *p, ralc_usage *out_usage);
 
 #endif

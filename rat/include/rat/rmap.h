@@ -36,9 +36,6 @@ typedef struct
 // elements.
 void rmap_init(rmap *p, rhash_val key0, rhash_val key1, rmap_fn_hash opt_hash_fn, rmap_fn_equals opt_equals_fn, ralc_iface *bucketsRalc_p, ralc_iface *elemsRalc_p);
 
-// Returns the elemsRalc_p request size for one copied key/value element.
-size_t rmap_elemAllocSize(size_t keySize, size_t valueSize);
-
 // Inserts or replaces key and returns map-owned value storage to initialize.
 // Existing value contents are not part of the replacement contract.
 void *rmap_set(rmap *p, const void *key_p, size_t keySize, size_t valueSize);
@@ -49,6 +46,9 @@ void *rmap_get(const rmap *p, const void *key_p, size_t keySize);
 bool rmap_getOrAdd(rmap *p, const void *key_p, size_t keySize, size_t valueSize, void **out_value_p);
 // Removes key and returns whether it was present.
 bool rmap_remove(rmap *p, const void *key_p, size_t keySize);
+
+// Returns the elemsRalc_p request size for one copied key/value element.
+size_t rmap_elemAllocSize(size_t keySize, size_t valueSize);
 
 // Frees all map-owned allocations and leaves p as an initialized empty map.
 void rmap_clear(rmap *p);
@@ -66,6 +66,7 @@ typedef struct
     struct rmap_elemHeader **lastPrevNext;
 } rmap_iterAll;
 
+// Creates an iterator over all current map elements.
 rmap_iterAll rmap_getAll(rmap *p);
 // Returns the next value, or NULL at the end. out_key_p and out_keySize_p receive
 // the map-owned key for the returned value.

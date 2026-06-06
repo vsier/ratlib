@@ -15,7 +15,7 @@ static union
     unsigned char bytes[8192];
 } buf;
 
-static int test_rlist_init_and_clear_empty_list(void)
+static int test_rlist_init_clear_and_empty_remove(void)
 {
     ralcGen parent;
     rlist list;
@@ -24,13 +24,15 @@ static int test_rlist_init_and_clear_empty_list(void)
     ralcGen_init(&parent, buf.bytes, sizeof(buf.bytes));
     rlist_init(&list, &parent.ifaceRalc);
 
-    TEST_CHECK(list.first == NULL);
-    TEST_CHECK(list.last == NULL);
+    TEST_CHECK(list.end == NULL);
     TEST_CHECK(list.count == 0);
 
     rlist_clear(&list);
-    TEST_CHECK(list.first == NULL);
-    TEST_CHECK(list.last == NULL);
+    TEST_CHECK(list.end == NULL);
+    TEST_CHECK(list.count == 0);
+
+    TEST_CHECK(rlist_remove(&list, NULL, 0) == NULL);
+    TEST_CHECK(list.end == NULL);
     TEST_CHECK(list.count == 0);
 
     ralcGen_getUsage(&parent, &usage);
@@ -40,49 +42,43 @@ static int test_rlist_init_and_clear_empty_list(void)
     return 0;
 }
 
-static int test_rlist_insert_updates_links_and_positions(void)
+static int test_rlist_push_insert_and_circular_end_links(void)
 {
     ralcGen parent;
     rlist list;
-    size_t actualSize;
 
     ralcGen_init(&parent, buf.bytes, sizeof(buf.bytes));
     rlist_init(&list, &parent.ifaceRalc);
 
-    int *a = rlist_insert(&list, NULL, sizeof(*a), &actualSize);
+    int *a = rlist_push(&list, sizeof(*a));
     TEST_CHECK(a != NULL);
-    TEST_CHECK(actualSize >= sizeof(*a));
     *a = 1;
 
+    TEST_CHECK(list.end != NULL);
     TEST_CHECK(list.count == 1);
-    TEST_CHECK(list.first == a);
-    TEST_CHECK(list.last == a);
-    TEST_CHECK(rlist_prev(a) == NULL);
-    TEST_CHECK(rlist_next(a) == NULL);
+    TEST_CHECK(rlist_first(&list) == a);
+    TEST_CHECK(rlist_last(&list) == a);
+    TEST_CHECK(rlist_prev(a) == list.end);
+    TEST_CHECK(rlist_next(a) == list.end);
+    TEST_CHECK(rlist_prev(list.end) == a);
+    TEST_CHECK(rlist_next(list.end) == a);
+    TEST_CHECK(rlist_elemSize(a) >= sizeof(*a));
 
-    int *b = rlist_insert(&list, NULL, sizeof(*b), &actualSize);
+    int *b = rlist_push(&list, sizeof(*b));
     TEST_CHECK(b != NULL);
     *b = 2;
 
-    TEST_CHECK(list.count == 2);
-    TEST_CHECK(list.first == a);
-    TEST_CHECK(list.last == b);
-    TEST_CHECK(rlist_prev(a) == NULL);
-    TEST_CHECK(rlist_next(a) == b);
-    TEST_CHECK(rlist_prev(b) == a);
-    TEST_CHECK(rlist_next(b) == NULL);
-
-    int *c = rlist_insert(&list, a, sizeof(*c), &actualSize);
+    int *c = rlist_pushFront(&list, sizeof(*c));
     TEST_CHECK(c != NULL);
     *c = 3;
 
-    int *d = rlist_insert(&list, b, sizeof(*d), &actualSize);
+    int *d = rlist_insert(&list, b, sizeof(*d));
     TEST_CHECK(d != NULL);
     *d = 4;
 
     TEST_CHECK(list.count == 4);
-    TEST_CHECK(list.first == c);
-    TEST_CHECK(list.last == b);
+    TEST_CHECK(rlist_first(&list) == c);
+    TEST_CHECK(rlist_last(&list) == b);
 
     TEST_CHECK(rlist_at(&list, 0) == c);
     TEST_CHECK(rlist_at(&list, 1) == a);
@@ -94,111 +90,182 @@ static int test_rlist_insert_updates_links_and_positions(void)
     TEST_CHECK(rlist_index(&list, d) == 2);
     TEST_CHECK(rlist_index(&list, b) == 3);
 
-    TEST_CHECK(rlist_prev(c) == NULL);
+    TEST_CHECK(rlist_prev(c) == list.end);
     TEST_CHECK(rlist_next(c) == a);
     TEST_CHECK(rlist_prev(a) == c);
     TEST_CHECK(rlist_next(a) == d);
     TEST_CHECK(rlist_prev(d) == a);
     TEST_CHECK(rlist_next(d) == b);
     TEST_CHECK(rlist_prev(b) == d);
-    TEST_CHECK(rlist_next(b) == NULL);
+    TEST_CHECK(rlist_next(b) == list.end);
 
     rlist_clear(&list);
     return 0;
 }
 
-static int test_rlist_resize_updates_first_last_and_null_appends(void)
+static int test_rlist_push_front_initializes_empty_list(void)
 {
     ralcGen parent;
     rlist list;
-    size_t actualSize;
 
     ralcGen_init(&parent, buf.bytes, sizeof(buf.bytes));
     rlist_init(&list, &parent.ifaceRalc);
 
-    int *a = rlist_insert(&list, NULL, sizeof(*a), &actualSize);
-    int *b = rlist_insert(&list, NULL, sizeof(*b), &actualSize);
+    int *a = rlist_pushFront(&list, sizeof(*a));
+    TEST_CHECK(a != NULL);
+    *a = 11;
+
+    TEST_CHECK(list.end != NULL);
+    TEST_CHECK(list.count == 1);
+    TEST_CHECK(rlist_first(&list) == a);
+    TEST_CHECK(rlist_last(&list) == a);
+    TEST_CHECK(rlist_prev(a) == list.end);
+    TEST_CHECK(rlist_next(a) == list.end);
+
+    rlist_clear(&list);
+    return 0;
+}
+
+static int test_rlist_failed_first_insert_restores_empty_state(void)
+{
+    ralcGen parent;
+    ralcPool pool;
+    rlist list;
+    ralc_usage usage;
+
+    ralcGen_init(&parent, buf.bytes, sizeof(buf.bytes));
+    ralcPool_init(&pool, rlist_elemAllocSize(0), 1, &parent.ifaceRalc);
+    rlist_init(&list, &pool.ifaceRalc);
+
+    TEST_CHECK(rlist_push(&list, sizeof(int)) == NULL);
+    TEST_CHECK(list.end == NULL);
+    TEST_CHECK(list.count == 0);
+
+    ralcPool_getUsage(&pool, &usage);
+    TEST_CHECK(usage.blockCount == 0);
+    TEST_CHECK(pool.count == 0);
+
+    ralcPool_clear(&pool);
+    return 0;
+}
+
+static int test_rlist_resize_preserves_links_and_payload(void)
+{
+    ralcGen parent;
+    rlist list;
+
+    ralcGen_init(&parent, buf.bytes, sizeof(buf.bytes));
+    rlist_init(&list, &parent.ifaceRalc);
+
+    int *a = rlist_push(&list, sizeof(*a));
+    int *b = rlist_push(&list, sizeof(*b));
     TEST_CHECK(a != NULL);
     TEST_CHECK(b != NULL);
     *a = 11;
     *b = 22;
 
-    int *newA = rlist_resize(&list, a, 2000, &actualSize);
+    int *newA = rlist_resize(&list, a, 2000);
     TEST_CHECK(newA != NULL);
-    TEST_CHECK(actualSize >= 2000);
-    TEST_CHECK(*newA == 11);
+    TEST_CHECK(rlist_elemSize(newA) >= 2000);
+    TEST_CHECK(*(int *)newA == 11);
     TEST_CHECK(list.count == 2);
-    TEST_CHECK(list.first == newA);
-    TEST_CHECK(list.last == b);
-    TEST_CHECK(rlist_prev(newA) == NULL);
+    TEST_CHECK(rlist_first(&list) == newA);
+    TEST_CHECK(rlist_last(&list) == b);
+    TEST_CHECK(rlist_prev(newA) == list.end);
     TEST_CHECK(rlist_next(newA) == b);
     TEST_CHECK(rlist_prev(b) == newA);
-    TEST_CHECK(rlist_next(b) == NULL);
+    TEST_CHECK(rlist_next(b) == list.end);
 
-    int *newB = rlist_resize(&list, b, 3000, &actualSize);
+    int *newB = rlist_resize(&list, b, 3000);
     TEST_CHECK(newB != NULL);
-    TEST_CHECK(actualSize >= 3000);
-    TEST_CHECK(*newB == 22);
+    TEST_CHECK(rlist_elemSize(newB) >= 3000);
+    TEST_CHECK(*(int *)newB == 22);
     TEST_CHECK(list.count == 2);
-    TEST_CHECK(list.first == newA);
-    TEST_CHECK(list.last == newB);
+    TEST_CHECK(rlist_first(&list) == newA);
+    TEST_CHECK(rlist_last(&list) == newB);
     TEST_CHECK(rlist_prev(newB) == newA);
     TEST_CHECK(rlist_next(newA) == newB);
-    TEST_CHECK(rlist_next(newB) == NULL);
-
-    int *c = rlist_resize(&list, NULL, sizeof(*c), &actualSize);
-    TEST_CHECK(c != NULL);
-    *c = 33;
-
-    TEST_CHECK(list.count == 3);
-    TEST_CHECK(list.first == newA);
-    TEST_CHECK(list.last == c);
-    TEST_CHECK(rlist_prev(c) == newB);
-    TEST_CHECK(rlist_next(newB) == c);
-    TEST_CHECK(rlist_next(c) == NULL);
+    TEST_CHECK(rlist_next(newB) == list.end);
 
     rlist_clear(&list);
     return 0;
 }
 
-static int test_rlist_remove_updates_edges_and_returns_next(void)
+static int test_rlist_resize_falls_back_with_alloc_only_parent(void)
+{
+    ralcGen parent;
+    ralcPool pool;
+    rlist list;
+
+    ralcGen_init(&parent, buf.bytes, sizeof(buf.bytes));
+    ralcPool_init(&pool, rlist_elemAllocSize(64), 4, &parent.ifaceRalc);
+    rlist_init(&list, &pool.ifaceRalc);
+
+    int *a = rlist_push(&list, sizeof(*a));
+    int *b = rlist_push(&list, sizeof(*b));
+    TEST_CHECK(a != NULL);
+    TEST_CHECK(b != NULL);
+    *a = 11;
+    *b = 22;
+
+    int *newA = rlist_resize(&list, a, 32);
+    TEST_CHECK(newA != NULL);
+    TEST_CHECK(*(int *)newA == 11);
+    TEST_CHECK(list.count == 2);
+    TEST_CHECK(rlist_first(&list) == newA);
+    TEST_CHECK(rlist_last(&list) == b);
+    TEST_CHECK(rlist_prev(newA) == list.end);
+    TEST_CHECK(rlist_next(newA) == b);
+    TEST_CHECK(rlist_prev(b) == newA);
+
+    rlist_clear(&list);
+    TEST_CHECK(pool.count == 0);
+
+    ralcPool_clear(&pool);
+    return 0;
+}
+
+static int test_rlist_remove_updates_edges_and_accepts_end_noop(void)
 {
     ralcGen parent;
     rlist list;
-    size_t actualSize;
 
     ralcGen_init(&parent, buf.bytes, sizeof(buf.bytes));
     rlist_init(&list, &parent.ifaceRalc);
 
-    int *a = rlist_insert(&list, NULL, sizeof(*a), &actualSize);
-    int *b = rlist_insert(&list, NULL, sizeof(*b), &actualSize);
-    int *c = rlist_insert(&list, NULL, sizeof(*c), &actualSize);
-    int *d = rlist_insert(&list, NULL, sizeof(*d), &actualSize);
+    int *a = rlist_push(&list, sizeof(*a));
+    int *b = rlist_push(&list, sizeof(*b));
+    int *c = rlist_push(&list, sizeof(*c));
+    int *d = rlist_push(&list, sizeof(*d));
     TEST_CHECK(a != NULL);
     TEST_CHECK(b != NULL);
     TEST_CHECK(c != NULL);
     TEST_CHECK(d != NULL);
 
+    TEST_CHECK(rlist_remove(&list, list.end, 0) == list.end);
+    TEST_CHECK(list.count == 4);
+    TEST_CHECK(rlist_first(&list) == a);
+    TEST_CHECK(rlist_last(&list) == d);
+
     TEST_CHECK(rlist_remove(&list, b, 2) == d);
     TEST_CHECK(list.count == 2);
-    TEST_CHECK(list.first == a);
-    TEST_CHECK(list.last == d);
-    TEST_CHECK(rlist_prev(a) == NULL);
+    TEST_CHECK(rlist_first(&list) == a);
+    TEST_CHECK(rlist_last(&list) == d);
+    TEST_CHECK(rlist_prev(a) == list.end);
     TEST_CHECK(rlist_next(a) == d);
     TEST_CHECK(rlist_prev(d) == a);
-    TEST_CHECK(rlist_next(d) == NULL);
+    TEST_CHECK(rlist_next(d) == list.end);
 
     TEST_CHECK(rlist_remove(&list, a, 1) == d);
     TEST_CHECK(list.count == 1);
-    TEST_CHECK(list.first == d);
-    TEST_CHECK(list.last == d);
-    TEST_CHECK(rlist_prev(d) == NULL);
-    TEST_CHECK(rlist_next(d) == NULL);
+    TEST_CHECK(rlist_first(&list) == d);
+    TEST_CHECK(rlist_last(&list) == d);
+    TEST_CHECK(rlist_prev(d) == list.end);
+    TEST_CHECK(rlist_next(d) == list.end);
 
     TEST_CHECK(rlist_remove(&list, d, 1) == NULL);
+    TEST_CHECK(list.end == NULL);
     TEST_CHECK(list.count == 0);
-    TEST_CHECK(list.first == NULL);
-    TEST_CHECK(list.last == NULL);
 
     return 0;
 }
@@ -208,14 +275,13 @@ static int test_rlist_clear_releases_backing_allocations(void)
     ralcGen parent;
     rlist list;
     ralc_usage usage;
-    size_t actualSize;
 
     ralcGen_init(&parent, buf.bytes, sizeof(buf.bytes));
     rlist_init(&list, &parent.ifaceRalc);
 
-    TEST_CHECK(rlist_insert(&list, NULL, sizeof(int), &actualSize) != NULL);
-    TEST_CHECK(rlist_insert(&list, NULL, sizeof(int), &actualSize) != NULL);
-    TEST_CHECK(rlist_insert(&list, NULL, sizeof(int), &actualSize) != NULL);
+    TEST_CHECK(rlist_push(&list, sizeof(int)) != NULL);
+    TEST_CHECK(rlist_push(&list, sizeof(int)) != NULL);
+    TEST_CHECK(rlist_push(&list, sizeof(int)) != NULL);
 
     rlist_getUsage(&list, &usage);
     TEST_CHECK(usage.blockCount == 3);
@@ -223,8 +289,7 @@ static int test_rlist_clear_releases_backing_allocations(void)
     TEST_CHECK(usage.systemSize > 0);
 
     rlist_clear(&list);
-    TEST_CHECK(list.first == NULL);
-    TEST_CHECK(list.last == NULL);
+    TEST_CHECK(list.end == NULL);
     TEST_CHECK(list.count == 0);
 
     ralcGen_getUsage(&parent, &usage);
@@ -232,8 +297,7 @@ static int test_rlist_clear_releases_backing_allocations(void)
     TEST_CHECK(usage.blockSize == 0);
 
     rlist_clear(&list);
-    TEST_CHECK(list.first == NULL);
-    TEST_CHECK(list.last == NULL);
+    TEST_CHECK(list.end == NULL);
     TEST_CHECK(list.count == 0);
 
     return 0;
@@ -250,33 +314,36 @@ static int test_rlist_generic_allocator_interface(void)
 
     int *a = ralc_alloc(&list.ifaceRalc, sizeof(*a), &actualSize);
     TEST_CHECK(a != NULL);
+    TEST_CHECK(actualSize >= sizeof(*a));
     TEST_CHECK(list.count == 1);
-    TEST_CHECK(list.first == a);
-    TEST_CHECK(list.last == a);
+    TEST_CHECK(rlist_first(&list) == a);
+    TEST_CHECK(rlist_last(&list) == a);
     *a = 44;
 
     int *b = ralc_realloc(&list.ifaceRalc, NULL, sizeof(*b), &actualSize);
     TEST_CHECK(b != NULL);
+    TEST_CHECK(actualSize >= sizeof(*b));
     TEST_CHECK(list.count == 2);
-    TEST_CHECK(list.first == a);
-    TEST_CHECK(list.last == b);
+    TEST_CHECK(rlist_first(&list) == a);
+    TEST_CHECK(rlist_last(&list) == b);
     *b = 55;
 
     int *newA = ralc_realloc(&list.ifaceRalc, a, 2048, &actualSize);
     TEST_CHECK(newA != NULL);
-    TEST_CHECK(*newA == 44);
+    TEST_CHECK(actualSize >= 2048);
+    TEST_CHECK(*(int *)newA == 44);
     TEST_CHECK(list.count == 2);
-    TEST_CHECK(list.first == newA);
-    TEST_CHECK(list.last == b);
+    TEST_CHECK(rlist_first(&list) == newA);
+    TEST_CHECK(rlist_last(&list) == b);
     TEST_CHECK(rlist_next(newA) == b);
     TEST_CHECK(rlist_prev(b) == newA);
 
     ralc_free(&list.ifaceRalc, newA);
     TEST_CHECK(list.count == 1);
-    TEST_CHECK(list.first == b);
-    TEST_CHECK(list.last == b);
-    TEST_CHECK(rlist_prev(b) == NULL);
-    TEST_CHECK(rlist_next(b) == NULL);
+    TEST_CHECK(rlist_first(&list) == b);
+    TEST_CHECK(rlist_last(&list) == b);
+    TEST_CHECK(rlist_prev(b) == list.end);
+    TEST_CHECK(rlist_next(b) == list.end);
 
     rlist_clear(&list);
     return 0;
@@ -287,18 +354,22 @@ static int test_rlist_elem_alloc_size_fits_pool_slot(void)
     ralcGen parent;
     ralcPool pool;
     rlist list;
-    size_t actualSize;
 
     ralcGen_init(&parent, buf.bytes, sizeof(buf.bytes));
-    ralcPool_init(&pool, rlist_elemAllocSize(sizeof(int)), 2, &parent.ifaceRalc);
+    ralcPool_init(&pool, rlist_elemAllocSize(sizeof(int)), 3, &parent.ifaceRalc);
     rlist_init(&list, &pool.ifaceRalc);
 
-    int *a = rlist_push(&list, sizeof(*a), &actualSize);
-    int *b = rlist_push(&list, sizeof(*b), &actualSize);
+    int *a = rlist_push(&list, sizeof(*a));
+    int *b = rlist_push(&list, sizeof(*b));
     TEST_CHECK(a != NULL);
     TEST_CHECK(b != NULL);
-    TEST_CHECK(actualSize >= sizeof(*b));
-    TEST_CHECK(pool.count == 2);
+    TEST_CHECK(rlist_elemSize(b) >= sizeof(*b));
+    TEST_CHECK(pool.count == 3);
+
+    ralc_usage usage;
+    rlist_getUsage(&list, &usage);
+    TEST_CHECK(usage.blockCount == 2);
+    TEST_CHECK(usage.blockSize == rlist_elemSize(a) + rlist_elemSize(b));
 
     rlist_clear(&list);
     TEST_CHECK(pool.count == 0);
@@ -309,10 +380,13 @@ static int test_rlist_elem_alloc_size_fits_pool_slot(void)
 
 int test_rlist(void)
 {
-    TEST_RUN(test_rlist_init_and_clear_empty_list);
-    TEST_RUN(test_rlist_insert_updates_links_and_positions);
-    TEST_RUN(test_rlist_resize_updates_first_last_and_null_appends);
-    TEST_RUN(test_rlist_remove_updates_edges_and_returns_next);
+    TEST_RUN(test_rlist_init_clear_and_empty_remove);
+    TEST_RUN(test_rlist_push_insert_and_circular_end_links);
+    TEST_RUN(test_rlist_push_front_initializes_empty_list);
+    TEST_RUN(test_rlist_failed_first_insert_restores_empty_state);
+    TEST_RUN(test_rlist_resize_preserves_links_and_payload);
+    TEST_RUN(test_rlist_resize_falls_back_with_alloc_only_parent);
+    TEST_RUN(test_rlist_remove_updates_edges_and_accepts_end_noop);
     TEST_RUN(test_rlist_clear_releases_backing_allocations);
     TEST_RUN(test_rlist_generic_allocator_interface);
     TEST_RUN(test_rlist_elem_alloc_size_fits_pool_slot);

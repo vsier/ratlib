@@ -167,10 +167,8 @@ void rcrc_initFromId(rcrc *p, rcrc_id id)
 
 void rcrc_init(rcrc *p, unsigned char bitWidth, uintmax_t poly, uintmax_t init, bool refIn, bool refOut, uintmax_t xorOut)
 {
-    assert(p && bitWidth <= RBIT_BITSIZE(sizeof(uintmax_t)) &&
-        (!bitWidth || !(poly & ~mask(bitWidth))) &&
-        (!bitWidth || !(init & ~mask(bitWidth))) &&
-        (!bitWidth || !(xorOut & ~mask(bitWidth))));
+    assert(p && bitWidth > 0 && bitWidth <= RBIT_BITSIZE(sizeof(uintmax_t)) &&
+        !(poly & ~mask(bitWidth)) && !(init & ~mask(bitWidth)) && !(xorOut & ~mask(bitWidth)));
 
     p->bitWidth = bitWidth;
     p->poly = poly;

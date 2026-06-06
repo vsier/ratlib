@@ -195,7 +195,7 @@ void ralcGen_free(ralcGen *p, void *ptr)
 
 void ralcGen_clear(ralcGen *p)
 {
-    assert(p);
+    assert(p && p->buf);
 
     p->size = 0;
 }

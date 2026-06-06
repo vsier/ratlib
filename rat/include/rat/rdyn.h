@@ -33,6 +33,7 @@ void *rdyn_remove(rdyn *p, size_t index, size_t count);
 
 // Sets capacity. newCap 0 clears the array.
 bool rdyn_setCap(rdyn *p, size_t newCap);
+// Frees the owned buffer through p->ralc and leaves p empty.
 void rdyn_clear(rdyn *p);
 
 // Inserts count elements at the end.

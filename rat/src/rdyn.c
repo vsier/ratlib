@@ -35,7 +35,7 @@ static unsigned char *reallocBuf(rdyn *p, size_t cap, size_t copyCount, size_t *
 
 static bool grow(rdyn *p, size_t growCount)
 {
-    assert(p && growCount <= SIZE_MAX - p->count);
+    assert(p && p->ralc && p->elemSize && growCount <= SIZE_MAX - p->count);
 
     size_t newCount = p->count + growCount;
     if (newCount <= p->cap)
@@ -61,7 +61,7 @@ static bool grow(rdyn *p, size_t growCount)
 
 static void shrink(rdyn *p, size_t shrinkCount)
 {
-    assert(p && shrinkCount <= p->count);
+    assert(p && p->ralc && p->elemSize && shrinkCount <= p->count);
 
     if (!p->allowShrink)
     {
@@ -106,7 +106,7 @@ void rdyn_init(rdyn *p, size_t elemSize, ralc_iface *ralc_if)
 
 void *rdyn_insert(rdyn *p, size_t index, size_t count)
 {
-    assert(p && index <= p->count && count <= SIZE_MAX - p->count);
+    assert(p && p->ralc && p->elemSize && index <= p->count && count <= SIZE_MAX - p->count);
 
     if (!grow(p, count))
         return NULL;
@@ -116,7 +116,7 @@ void *rdyn_insert(rdyn *p, size_t index, size_t count)
 
 void *rdyn_resize(rdyn *p, size_t index, size_t oldCount, size_t newCount)
 {
-    assert(p && index <= p->count && oldCount <= p->count - index);
+    assert(p && p->ralc && p->elemSize && index <= p->count && oldCount <= p->count - index);
 
     void *result;
     if (newCount > oldCount)
@@ -129,7 +129,7 @@ void *rdyn_resize(rdyn *p, size_t index, size_t oldCount, size_t newCount)
 
 void *rdyn_remove(rdyn *p, size_t index, size_t count)
 {
-    assert(p && index <= p->count && count <= p->count - index);
+    assert(p && p->ralc && p->elemSize && index <= p->count && count <= p->count - index);
 
     rarr_remove(p->buf, p->elemSize, p->count, index, count);
     shrink(p, count);
@@ -139,7 +139,7 @@ void *rdyn_remove(rdyn *p, size_t index, size_t count)
 
 bool rdyn_setCap(rdyn *p, size_t newCap)
 {
-    assert(p);
+    assert(p && p->ralc && p->elemSize);
 
     if (!newCap)
     {
@@ -159,7 +159,7 @@ bool rdyn_setCap(rdyn *p, size_t newCap)
 
 void rdyn_clear(rdyn *p)
 {
-    assert(p);
+    assert(p && p->ralc);
 
     if (p->buf) ralc_free(p->ralc, p->buf);
     p->buf = NULL;

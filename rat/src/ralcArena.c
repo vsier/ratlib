@@ -43,12 +43,6 @@ void ralcArena_init(ralcArena *p, size_t initChunkSize, ralc_iface *parentRalc_p
     p->ifaceRalc.kind = RALC_ARENA;
 }
 
-size_t ralcArena_chunkAllocSize(size_t chunkSize)
-{
-    assert(chunkSize <= SIZE_MAX - HEADER_SIZE);
-    return HEADER_SIZE + chunkSize;
-}
-
 void *ralcArena_push(ralcArena *p, size_t size, size_t *out_actualSize)
 {
     assert(p && p->parentRalc && out_actualSize);
@@ -104,14 +98,14 @@ end:
 
 ralcArena_mark_t ralcArena_mark(ralcArena *p)
 {
-    assert(p);
+    assert(p && p->parentRalc);
 
     return p->size;
 }
 
 void ralcArena_rewind(ralcArena *p, ralcArena_mark_t mark)
 {
-    assert(p && mark <= p->size);
+    assert(p && p->parentRalc && mark <= p->size);
 
     size_t size = p->size - mark;
 
@@ -134,6 +128,12 @@ void ralcArena_rewind(ralcArena *p, ralcArena_mark_t mark)
     }
 
     p->size = mark;
+}
+
+size_t ralcArena_chunkAllocSize(size_t chunkSize)
+{
+    assert(chunkSize <= SIZE_MAX - HEADER_SIZE);
+    return HEADER_SIZE + chunkSize;
 }
 
 void ralcArena_clear(ralcArena *p)
@@ -165,6 +165,7 @@ void ralcArena_getUsage(ralcArena *p, ralc_usage *out_usage)
     for (chunk *chunk_p = p->chunks; chunk_p; chunk_p = chunk_p->next)
     {
         ++chunkCount;
+        assert(chunk_p->size <= chunk_p->cap);
 
         size_t remaining = chunk_p->cap - chunk_p->size;
         chunkHoleCount += remaining > 0;

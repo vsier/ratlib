@@ -250,20 +250,21 @@ typedef struct
     bool refOut;
 } rcrc;
 
-// Initialize and immediately calculate a custom CRC over buffer
+// Initializes a custom CRC, adds buf[0..bufSize), and returns the result.
 uintmax_t rcrc_calc(unsigned char bitWidth, uintmax_t poly, uintmax_t init, bool refIn, bool refOut, uintmax_t xorOut, const void *buf, size_t bufSize);
-// Initialize and immediately calculate a predefined CRC over buffer
+// Initializes a predefined CRC, adds buf[0..bufSize), and returns the result.
 uintmax_t rcrc_calcFromId(rcrc_id id, const void *buf, size_t bufSize);
 
-// Initialize a custom CRC
+// Initializes a custom CRC. bitWidth must be in 1..sizeof(uintmax_t) bits, and
+// poly/init/xorOut must fit in that width.
 void rcrc_init(rcrc *p, unsigned char bitWidth, uintmax_t poly, uintmax_t init, bool refIn, bool refOut, uintmax_t xorOut);
-// Initialize a predefined CRC
+// Initializes a predefined CRC selected by id.
 void rcrc_initFromId(rcrc *p, rcrc_id id);
-// Add a byte to CRC
+// Adds one byte to the CRC state.
 void rcrc_addByte(rcrc *p, unsigned char b);
-// Add bytes to CRC
+// Adds buf[0..bufSize) to the CRC state.
 void rcrc_add(rcrc *p, const void *buf, size_t bufSize);
-// Current result of CRC
+// Returns the current finalized CRC result without modifying p.
 uintmax_t rcrc_result(rcrc *p);
 
 #endif

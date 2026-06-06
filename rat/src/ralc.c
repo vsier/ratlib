@@ -25,7 +25,10 @@ void *ralc_alloc(ralc_iface *p, size_t size, size_t *out_actualSize)
         case RALC_LIST:
         {
             rlist *listRalc_p = RAT_M_TO_S(rlist, ifaceRalc, p);
-            return rlist_push(listRalc_p, size, out_actualSize);
+
+            void *obj_p = rlist_push(listRalc_p, size);
+            if (obj_p) *out_actualSize = rlist_elemSize(obj_p);
+            return obj_p;
         }
         case RALC_ARENA:
         {
@@ -66,7 +69,15 @@ void *ralc_realloc(ralc_iface *p, void *ptr, size_t newSize, size_t *out_actualN
         case RALC_LIST:
         {
             rlist *listRalc_p = RAT_M_TO_S(rlist, ifaceRalc, p);
-            return rlist_resize(listRalc_p, ptr, newSize, out_actualNewSize);
+
+            void *obj_p;
+            if (!ptr)
+                obj_p = rlist_push(listRalc_p, newSize);
+            else
+                obj_p = rlist_resize(listRalc_p, ptr, newSize);
+
+            if (obj_p) *out_actualNewSize = rlist_elemSize(obj_p);
+            return obj_p;
         }
         case RALC_ARENA:
         {

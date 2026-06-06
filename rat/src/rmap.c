@@ -129,17 +129,6 @@ void rmap_init(rmap *p, rhash_val key0, rhash_val key1, rmap_fn_hash opt_hash_fn
     p->count = 0;
 }
 
-size_t rmap_elemAllocSize(size_t keySize, size_t valueSize)
-{
-    assert(RAT_ALIGNMENT > 0);
-    assert(keySize <= SIZE_MAX - (RAT_ALIGNMENT - 1));
-    assert(valueSize <= SIZE_MAX - (RAT_ALIGNMENT - 1));
-    assert(RAT_ALIGN(sizeof(elemHeader)) <= SIZE_MAX - RAT_ALIGN(keySize));
-    assert(RAT_ALIGN(sizeof(elemHeader)) + RAT_ALIGN(keySize) <= SIZE_MAX - RAT_ALIGN(valueSize));
-
-    return ELEM_SIZE(keySize, valueSize);
-}
-
 void *rmap_set(rmap *p, const void *key_p, size_t keySize, size_t valueSize)
 {
     assert(MAP_VALID(p) && (key_p || !keySize));
@@ -244,9 +233,20 @@ bool rmap_remove(rmap *p, const void *key_p, size_t keySize)
     return false;
 }
 
+size_t rmap_elemAllocSize(size_t keySize, size_t valueSize)
+{
+    assert(RAT_ALIGNMENT > 0);
+    assert(keySize <= SIZE_MAX - (RAT_ALIGNMENT - 1));
+    assert(valueSize <= SIZE_MAX - (RAT_ALIGNMENT - 1));
+    assert(RAT_ALIGN(sizeof(elemHeader)) <= SIZE_MAX - RAT_ALIGN(keySize));
+    assert(RAT_ALIGN(sizeof(elemHeader)) + RAT_ALIGN(keySize) <= SIZE_MAX - RAT_ALIGN(valueSize));
+
+    return ELEM_SIZE(keySize, valueSize);
+}
+
 void rmap_clear(rmap *p)
 {
-    assert(MAP_VALID(p));
+    assert(p && MAP_VALID(p));
 
     if (!p->bucketCount) return;
 
@@ -281,8 +281,7 @@ rmap_iterAll rmap_getAll(rmap *p)
 
 void *rmap_iterAll_next(rmap_iterAll *p, const void **out_key_p, size_t *out_keySize_p)
 {
-    assert(p && MAP_VALID(p->map));
-    assert(out_key_p && out_keySize_p && "output key parameters are required");
+    assert(p && MAP_VALID(p->map) && out_key_p && out_keySize_p);
 
     p->last = NULL;
     p->lastPrevNext = NULL;
@@ -309,8 +308,7 @@ void *rmap_iterAll_next(rmap_iterAll *p, const void **out_key_p, size_t *out_key
 
 void rmap_iterAll_removeElem(rmap_iterAll *p)
 {
-    assert(p && MAP_VALID(p->map) && p->last && p->lastPrevNext && p->map->count &&
-        "rmap_iterAll_removeElem requires a current element");
+    assert(p && MAP_VALID(p->map) && p->last && p->lastPrevNext && p->map->count);
 
     elemHeader *elem_p = p->last;
     *p->lastPrevNext = elem_p->next;

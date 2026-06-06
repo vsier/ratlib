@@ -77,7 +77,7 @@ void ralcPool_init(ralcPool *p, size_t elemSize, size_t initChunkCap, ralc_iface
 
 void *ralcPool_alloc(ralcPool *p)
 {
-    assert(p);
+    assert(p && p->parentRalc);
 
     if (!p->freeSlots && !grow(p))
         return NULL;
@@ -91,7 +91,7 @@ void *ralcPool_alloc(ralcPool *p)
 
 void ralcPool_free(ralcPool *p, void *ptr)
 {
-    assert(p && ptr && p->count > 0);
+    assert(p && p->parentRalc && ptr && p->count > 0);
 
     freeSlot *restrict slot_p = ptr;
     slot_p->next = p->freeSlots;
@@ -132,14 +132,22 @@ void ralcPool_getUsage(ralcPool *p, ralc_usage *out_usage)
     {
         ++chunkCount;
         assert(chunk_p->cap <= chunk_p->blockSize / p->elemSize);
+        assert(chunk_p->cap <= SIZE_MAX - cap);
+
+        size_t chunkSystemSize = chunk_p->blockSize - chunk_p->cap * p->elemSize;
+        assert(chunkSystemSize <= SIZE_MAX - systemSize);
+
         cap += chunk_p->cap;
-        systemSize += chunk_p->blockSize - chunk_p->cap * p->elemSize;
+        systemSize += chunkSystemSize;
     }
 
     assert(cap >= p->count);
 
     size_t holeCount = cap - p->count;
+    assert(holeCount <= SIZE_MAX / p->elemSize);
     size_t holeSize = holeCount * p->elemSize;
+    assert(chunkCount <= out_usage->blockCount);
+    assert(systemSize <= SIZE_MAX - holeSize && out_usage->blockSize >= systemSize + holeSize);
 
     out_usage->blockCount -= chunkCount;
     out_usage->blockCount += p->count;
