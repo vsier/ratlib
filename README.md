@@ -80,8 +80,13 @@ Install the library:
 cmake --install build --config Release --prefix install
 ```
 
-To use only the library from another CMake project, add the `rat` subdirectory
-and link against the `rat` target.
+To use the library from another CMake project, add the ratlib repository root
+and link against the `rat` target:
+
+```cmake
+add_subdirectory("ratlib")
+target_link_libraries(my_target PRIVATE rat)
+```
 
 ## License
 
