@@ -29,7 +29,7 @@ static size_t bench_rlist_push_remove(void)
 
         while (list.count)
         {
-            size_t *value_p = rlist_first(&list);
+            size_t *value_p = list.first;
             sum += *value_p;
             rlist_remove(&list, value_p, 1);
         }
