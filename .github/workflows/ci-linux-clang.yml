@@ -1,0 +1,60 @@
+# SPDX-FileCopyrightText: 2026 vsier <https://github.com/vsier>
+# SPDX-License-Identifier: MIT
+
+name: CI Linux Clang
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.build_type }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [ Debug, Release ]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Configure
+        run: |
+          if [ "${{ matrix.build_type }}" = "Debug" ]; then
+            build_tests=ON
+            build_benchmarks=OFF
+          else
+            build_tests=OFF
+            build_benchmarks=ON
+          fi
+
+          cmake -S . -B build \
+            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DRAT_BUILD_TESTS=$build_tests \
+            -DRAT_BUILD_BENCHMARKS=$build_benchmarks \
+            -DRAT_INSTALL=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        if: matrix.build_type == 'Debug'
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Benchmark Smoke
+        if: matrix.build_type == 'Release'
+        run: ./build/benchmarks/rat_benchmarks 128 1
+
+      - name: Install
+        if: matrix.build_type == 'Release'
+        run: cmake --install build --prefix "$RUNNER_TEMP/ratlib-install"
