@@ -47,9 +47,9 @@ static bool grow(ralcPool *p)
 
     p->chunks = chunk_p;
 
-    for (size_t i = 0; i < chunk_p->cap; ++i)
+    for (size_t i = chunk_p->cap; i > 0; --i)
     {
-        freeSlot *restrict slot_p = (freeSlot *)(chunk_p->data + i * p->elemSize);
+        freeSlot *restrict slot_p = (freeSlot *)(chunk_p->data + (i - 1) * p->elemSize);
         slot_p->next = p->freeSlots;
         p->freeSlots = slot_p;
     }
