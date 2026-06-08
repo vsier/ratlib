@@ -1,5 +1,5 @@
-// SPDX-FileCopyrightText: 2026 vsier <https://github.com/vsier>
 // SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 vsier <https://github.com/vsier>
 
 #include <rat/rlist.h>
 #include <rat/extra.h>

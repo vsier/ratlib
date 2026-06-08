@@ -1,5 +1,5 @@
-// SPDX-FileCopyrightText: 2026 vsier <https://github.com/vsier>
 // SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2026 vsier <https://github.com/vsier>
 
 #ifndef RAT_RALCPOOL_H_
 #define RAT_RALCPOOL_H_
