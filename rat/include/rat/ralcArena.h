@@ -13,16 +13,16 @@ typedef struct
 {
     ralc_iface *parentRalc;
     void *chunks;
-    size_t chunkSize; // Default payload capacity for new chunks.
+    size_t chunkCap;  // Default payload capacity for new chunks.
     size_t size;      // Total aligned user bytes currently live in the arena.
     ralc_iface ifaceRalc;
 } ralcArena;
 
 typedef size_t ralcArena_mark_t;
 
-// Initializes p with parentRalc_p as the backing allocator. initChunkSize is the
+// Initializes p with parentRalc_p as the backing allocator. initChunkCap is the
 // default payload capacity for new chunks.
-void ralcArena_init(ralcArena *p, size_t initChunkSize, ralc_iface *parentRalc_p);
+void ralcArena_init(ralcArena *p, size_t initChunkCap, ralc_iface *parentRalc_p);
 
 // Pushes size bytes onto the arena. A zero-size push reserves one byte before
 // alignment, so every successful push returns a distinct pointer. out_actualSize
@@ -34,9 +34,9 @@ ralcArena_mark_t ralcArena_mark(ralcArena *p);
 // invalidated by clear or by rewinding below it.
 void ralcArena_rewind(ralcArena *p, ralcArena_mark_t mark);
 
-// Returns the parent allocator request size for one arena chunk with chunkSize
+// Returns the parent allocator request size for one arena chunk with chunkCap
 // bytes of payload capacity.
-size_t ralcArena_chunkAllocSize(size_t chunkSize);
+size_t ralcArena_chunkAllocSize(size_t chunkCap);
 
 // Frees all chunks owned by the arena through the parent allocator.
 void ralcArena_clear(ralcArena *p);

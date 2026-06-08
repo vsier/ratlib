@@ -32,13 +32,13 @@ typedef struct chunk
 
 
 // p->chunks is a stack; new allocations use the top chunk when it has room.
-void ralcArena_init(ralcArena *p, size_t initChunkSize, ralc_iface *parentRalc_p)
+void ralcArena_init(ralcArena *p, size_t initChunkCap, ralc_iface *parentRalc_p)
 {
     assert(p && parentRalc_p);
 
     p->parentRalc = parentRalc_p;
     p->chunks = NULL;
-    p->chunkSize = initChunkSize;
+    p->chunkCap = initChunkCap;
     p->size = 0;
     p->ifaceRalc.kind = RALC_ARENA;
 }
@@ -65,9 +65,9 @@ void *ralcArena_push(ralcArena *p, size_t size, size_t *out_actualSize)
     }
 
     size_t cap;
-    if (p->chunkSize > size)
+    if (p->chunkCap > size)
     {
-        cap = ralcArena_chunkAllocSize(p->chunkSize);
+        cap = ralcArena_chunkAllocSize(p->chunkCap);
     }
     else
     {
@@ -130,10 +130,10 @@ void ralcArena_rewind(ralcArena *p, ralcArena_mark_t mark)
     p->size = mark;
 }
 
-size_t ralcArena_chunkAllocSize(size_t chunkSize)
+size_t ralcArena_chunkAllocSize(size_t chunkCap)
 {
-    assert(chunkSize <= SIZE_MAX - HEADER_SIZE);
-    return HEADER_SIZE + chunkSize;
+    assert(chunkCap <= SIZE_MAX - HEADER_SIZE);
+    return HEADER_SIZE + chunkCap;
 }
 
 void ralcArena_clear(ralcArena *p)
