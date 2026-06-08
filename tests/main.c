@@ -34,6 +34,7 @@ int main(void)
     TEST_RUN(test_rcmp);
     TEST_RUN(test_rarr);
     TEST_RUN(test_rring);
+    TEST_RUN(test_rorder);
 
     return 0;
 }

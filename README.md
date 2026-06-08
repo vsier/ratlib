@@ -48,6 +48,8 @@ helpers.
   strings, numeric objects, floating-point objects, and pointer variants.
 - [`rbit.h`](rat/include/rat/rbit.h): bit, flag, mask, and field macros for
   unsigned integer values.
+- [`rorder.h`](rat/include/rat/rorder.h): fixed-width integer byte-order
+  conversion helpers for little-endian, big-endian, and byte-swapped storage.
 
 ## Build
 

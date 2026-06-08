@@ -24,5 +24,6 @@ int test_rcrc(void);
 int test_rcmp(void);
 int test_rarr(void);
 int test_rring(void);
+int test_rorder(void);
 
 #endif

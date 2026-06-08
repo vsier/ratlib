@@ -14,7 +14,7 @@
 
 #define ROTL(_v, _n) (((_v) << (_n)) | ((_v) >> (sizeof(rhash_val) * CHAR_BIT - (_n))))
 
-static void round(rhash_val *restrict v0_p, rhash_val *restrict v1_p, rhash_val *restrict v2_p, rhash_val *restrict v3_p)
+static void sipround(rhash_val *restrict v0_p, rhash_val *restrict v1_p, rhash_val *restrict v2_p, rhash_val *restrict v3_p)
 {
     *v0_p += *v1_p;
     *v1_p = ROTL(*v1_p, 5) ^ *v0_p;
@@ -74,7 +74,7 @@ void rhash_add(rhash *p, const void *buf, size_t bufSize)
 
         v3 ^= word;
         for (unsigned char j = 0; j < CROUNDS; ++j)
-            round(&v0, &v1, &v2, &v3);
+            sipround(&v0, &v1, &v2, &v3);
         v0 ^= word;
 
         bufSize -= needSize;
@@ -90,7 +90,7 @@ void rhash_add(rhash *p, const void *buf, size_t bufSize)
 
         v3 ^= word;
         for (unsigned char j = 0; j < CROUNDS; ++j)
-            round(&v0, &v1, &v2, &v3);
+            sipround(&v0, &v1, &v2, &v3);
         v0 ^= word;
     }
 
@@ -117,12 +117,12 @@ rhash_val rhash_result(rhash *p)
 
     v3 ^= word;
     for (unsigned char j = 0; j < CROUNDS; ++j)
-        round(&v0, &v1, &v2, &v3);
+        sipround(&v0, &v1, &v2, &v3);
     v0 ^= word;
 
     v2 ^= 0xFF;
     for (unsigned char j = 0; j < DROUNDS; ++j)
-        round(&v0, &v1, &v2, &v3);
+        sipround(&v0, &v1, &v2, &v3);
 
     return v1 ^ v3;
 }

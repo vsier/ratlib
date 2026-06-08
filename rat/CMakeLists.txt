@@ -49,6 +49,7 @@ target_sources(rat
 	"include/rat/rhash.h"
 	"include/rat/rlist.h"
 	"include/rat/rmap.h"
+	"include/rat/rorder.h"
 	"include/rat/rring.h"
 	PRIVATE
 	"src/rat_ralc.c"
@@ -63,6 +64,7 @@ target_sources(rat
 	"src/rat_rhash.c"
 	"src/rat_rlist.c"
 	"src/rat_rmap.c"
+	"src/rat_rorder.c"
 	"src/rat_rring.c"
 )
 
